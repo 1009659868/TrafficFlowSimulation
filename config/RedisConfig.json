@@ -1,0 +1,18 @@
+{
+  "host": "192.168.43.246",
+  "password": "",
+  "database": 0,
+  "port": 6379,
+  "pool_size": 10,
+  "type": "hiredis",
+  "time_out":1000,
+  "sleep_time_tf":1,
+  "sleep_time_hm":4,
+  "useTS":"false",
+  "reTryCount":5,
+  "reTryCoddddunt":5,
+  "runHDMAP":"true",
+  "useXY":"true",
+  "xodr_mod":"true",
+  "route_to_sumo_redis":"true"
+}

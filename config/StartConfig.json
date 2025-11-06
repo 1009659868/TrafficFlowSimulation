@@ -1,0 +1,12 @@
+{
+    "instanceID":"19738",
+    "simSpaceID": "XODR_1010",
+    "startType": "sumo", 
+    "version":"1.18.0",
+    "stepLength": 0.03,
+    "isTrafficSignal":false,
+    "frameRate": 60,
+    "offset_x":-212295.79885,
+    "offset_y":-2681305.7766,
+    "addMax":5
+}

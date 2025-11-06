@@ -1,0 +1,59 @@
+{
+    "simSpaceID": "950XODR_5",
+    "isRun": 0,
+    "stepLength": 0.03,
+    "isTrafficSingal": 0,
+    "maxVehicles": 2000,
+    "TypeDensity": {
+        "Civilian": 1,
+        "Military": 0
+    },
+    "Type": {
+        "Civilian": [
+            {
+                "001-AcuraRL": {
+                    "density": 0.6,
+                    "maxSpeed": 120
+                }
+            },
+            {
+                "048-MotorCoach01": {
+                    "density": 0.6,
+                    "maxSpeed": 110
+                }
+            },
+            {
+                "050-MPV01": {
+                    "density": 0.6,
+                    "maxSpeed": 100
+                }
+            },
+            {
+                "053-Truck04": {
+                    "density": 0.6,
+                    "maxSpeed": 85
+                }
+            },
+            {
+                "055-Van02": {
+                    "density": 0.6,
+                    "maxSpeed": 80
+                }
+            },
+            {
+                "039-MixerTruck01": {
+                    "density": 0.6,
+                    "maxSpeed": 60
+                }
+            }
+        ],
+        "Military": [
+            {
+                "DF26_VEC": {
+                    "density": 1,
+                    "maxSpeed": 120
+                }
+            }
+        ]
+    }
+}

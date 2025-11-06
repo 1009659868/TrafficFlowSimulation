@@ -1,0 +1,55 @@
+{
+    "maxVehicles": 2000,
+    "TypeDensity": {
+        "Civilian": 1,
+        "Military": 0
+    },
+    "Type": {
+        "Civilian": [
+            {
+                "001-AcuraRL": {
+                    "density":0.4,
+                    "maxSpeed":20
+                }
+            },
+            {
+                "048-MotorCoach01": {
+                    "density":0.8,
+                    "maxSpeed":15
+                }
+            },
+            {
+                "050-MPV01": {
+                    "density":0.4,
+                    "maxSpeed":30
+                }
+            },
+            {
+                "053-Truck04": {
+                    "density":0.6,
+                    "maxSpeed":16
+                }
+            },
+            {
+                "055-Van02": {
+                    "density":0.2,
+                    "maxSpeed":14
+                }
+            },
+            {
+                "039-MixerTruck01": {
+                    "density":0.6,
+                    "maxSpeed":12
+                }
+            }
+        ],
+        "Military": [
+            {
+                "DF26_VEC": {
+                    "density":1,
+                    "maxSpeed":120
+                }
+            }
+        ]
+    }
+}
