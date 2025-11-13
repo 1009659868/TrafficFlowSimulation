@@ -9,37 +9,43 @@
             {
                 "001-AcuraRL": {
                     "density":0.4,
-                    "maxSpeed":20
+                    "maxSpeed":33.3
+                    
                 }
             },
             {
                 "048-MotorCoach01": {
                     "density":0.8,
-                    "maxSpeed":15
+                    "maxSpeed":33.3
+                   
                 }
             },
             {
                 "050-MPV01": {
                     "density":0.4,
-                    "maxSpeed":30
+                    "maxSpeed":33.3
+                    
                 }
             },
             {
                 "053-Truck04": {
                     "density":0.6,
-                    "maxSpeed":16
+                    "maxSpeed":33.3
+                    
                 }
             },
             {
                 "055-Van02": {
                     "density":0.2,
-                    "maxSpeed":14
+                    "maxSpeed":33.3
+                    
                 }
             },
             {
                 "039-MixerTruck01": {
                     "density":0.6,
-                    "maxSpeed":12
+                    "maxSpeed":33.3
+                    
                 }
             }
         ],
@@ -47,7 +53,8 @@
             {
                 "DF26_VEC": {
                     "density":1,
-                    "maxSpeed":120
+                    "maxSpeed":33.3
+                    
                 }
             }
         ]

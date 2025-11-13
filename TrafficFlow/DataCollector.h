@@ -26,8 +26,7 @@ class DataCollector
 
     const std::string collectTrafficVehicleData(std::vector<TrafficVehicle>& vehicles, double offset_x, double offset_y,
                                                 const ConfigTrafficFlow& configTra);
-    const std::string collectEgoVehiclesData(const std::vector<TrafficVehicle>& vehicles, double offset_x,
-                                             double offset_y, const ConfigTrafficFlow& configTra);
+
     // 滑动窗口管理
     void updateSlidingWindows(std::vector<TrafficVehicle*>& newDisappearing,
                               std::vector<TrafficVehicle*>& newAppearing);

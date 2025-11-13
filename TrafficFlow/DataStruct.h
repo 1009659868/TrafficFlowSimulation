@@ -178,7 +178,7 @@ struct VehicleType
 {
     // Civilian,Military
     std::vector<std::string> typeList;
-    // std::map<std::string, nlohmann::json> typeMap; // 存储任意类型的JSON值
+    
     // Civilian:0.2,Military:0.8 大类密度
     std::map<std::string, nlohmann::json> densityMap; // 存储任意类型的JSON值
     std::map<std::string, std::vector<string>> detailTypeListMap;
@@ -269,34 +269,11 @@ typedef struct _parameters
                 paramMap[it.key()] = it.value();
             }
 
-            // for (const auto& item : paramMap["TypeDensity"]) {
-            //     for (auto it = item.begin(); it != item.end(); ++it) {
-            //         string type = it.key();
-            //         float density = it.value();
-
-            //         paramVType.typeList.push_back(type);
-            //         paramVType.densityMap[type] = density;
-            //     }
-            // }
-
             for (auto& item : paramMap["TypeDensity"].items()) {
                 paramVType.typeList.push_back(item.key());
                 paramVType.densityMap[item.key()] = item.value().get<float>();
             }
 
-            // for (auto it = paramMap["Type"].begin(); it != paramMap["Type"].end(); ++it) {
-            //     string type = it.key();
-            //     vector<string> detailTypes;
-            //     for (const auto& detailItem : it.value()) {
-            //         for (auto detailIt = detailItem.begin(); detailIt != detailItem.end(); ++detailIt) {
-            //             string detailType = detailIt.key();
-            //             double density = detailIt.value();
-            //             detailTypes.push_back(detailType);
-            //             paramVType.detailDensityMap[detailType] = density;
-            //         }
-            //     }
-            //     paramVType.detailTypeListMap[type] = detailTypes;
-            // }
             for (auto& typeItem : paramMap["Type"].items()) {
                 string type = typeItem.key();
                 vector<string> detailTypes;
@@ -355,7 +332,7 @@ typedef struct startConfig
     // int frameRate;
     // double offset_x;
     // double offset_y;
-
+    // ...
     std::map<std::string, nlohmann::json> configMap; // 存储任意类型的JSON值
     template <typename T> std::optional<T> getConfig(const std::string& key)
     {
@@ -396,15 +373,6 @@ class ConfigTrafficFlow
     vector<string> options;
 };
 
-// enum class VehicleType {
-//     AcuraRL ,
-//     MotorCoach01,
-//     MPV01,
-//     Truck04,
-//     Van02,
-//     MixerTruck01,
-//     COUNT // 用于获取枚举项数量
-// };
 typedef struct Navigation_
 {
     /* data */
@@ -609,21 +577,21 @@ class TrafficLight : public Actor
     // 交通灯状态结构体
     struct TrafficLightState
     {
-        std::string currentPhaseState;     // 当前相位状态字符串 (SUMO风格, 如 "GrGr")[2](@ref)
-        int currentPhaseIndex = 0;         // 当前相位索引[2](@ref)
+        std::string currentPhaseState;     // 当前相位状态字符串 (SUMO风格, 如 "GrGr")
+        int currentPhaseIndex = 0;         // 当前相位索引
         double currentPhaseElapsed = 0.0;  // 当前相位已运行时间 (秒)
-        double currentPhaseDuration = 0.0; // 当前相位的总持续时间 (秒)[2](@ref)
-        double nextSwitchTime = 0.0;       // 计划切换到下一相位的绝对仿真时间 (秒)[2](@ref)
-        std::string programID;             // 当前信号程序ID[2](@ref)
+        double currentPhaseDuration = 0.0; // 当前相位的总持续时间 (秒)
+        double nextSwitchTime = 0.0;       // 计划切换到下一相位的绝对仿真时间 (秒)
+        std::string programID;             // 当前信号程序ID
         bool isActive = true;              // 交通灯是否处于活动状态
     };
 
     // 相位定义
     struct PhaseDefinition
     {
-        double duration;   // 相位持续时间 (秒)[2](@ref)
-        std::string state; // 相位状态字符串[2](@ref)
-        std::string name;  // 相位名称 (可选)[2](@ref)
+        double duration;   // 相位持续时间 (秒)
+        std::string state; // 相位状态字符串
+        std::string name;  // 相位名称 
         double minDur;     // 最小持续时间 (用于自适应信号控制)
         double maxDur;     // 最大持续时间 (用于自适应信号控制)
     };
@@ -631,27 +599,27 @@ class TrafficLight : public Actor
     // 信号逻辑程序
     struct ProgramLogic
     {
-        std::string programID;                                   // 程序ID[2](@ref)
+        std::string programID;                                   // 程序ID
         int type;                                                // 程序类型(静态/自适应等)
         int currentPhaseIndex;                                   // 当前相位索引
-        std::vector<PhaseDefinition> phases;                     // 相位列表[2](@ref)
+        std::vector<PhaseDefinition> phases;                     // 相位列表
         std::unordered_map<std::string, std::string> parameters; // 额外参数
     };
 
     // 受控车道信息
     struct ControlledLink
     {
-        std::string incomingLane; // 进口车道[2](@ref)
-        std::string outgoingLane; // 出口车道[2](@ref)
-        std::string viaLane;      // 通过车道[2](@ref)
+        std::string incomingLane; // 进口车道
+        std::string outgoingLane; // 出口车道
+        std::string viaLane;      // 通过车道
     };
 
     // 成员变量
     TrafficLightState state;
     std::vector<PhaseDefinition> phases;
     std::vector<ProgramLogic> programs;
-    std::vector<std::string> controlledLanes;                 // 受控车道列表[2](@ref)
-    std::vector<std::vector<ControlledLink>> controlledLinks; // 受控链接列表[2](@ref)
+    std::vector<std::string> controlledLanes;                 // 受控车道列表
+    std::vector<std::vector<ControlledLink>> controlledLinks; // 受控链接列表
     // 成员函数
     TrafficLight() {}
 
@@ -661,19 +629,19 @@ class TrafficLight : public Actor
     void updateState(const string& id)
     {
         try {
-            // 获取当前相位索引[2](@ref)
+            // 获取当前相位索引
             state.currentPhaseIndex = libsumo::TrafficLight::getPhase(id);
 
-            // 获取当前相位持续时间[2](@ref)
+            // 获取当前相位持续时间
             state.currentPhaseDuration = libsumo::TrafficLight::getPhaseDuration(id);
 
-            // 获取下一个切换时间[2](@ref)
+            // 获取下一个切换时间
             state.nextSwitchTime = libsumo::TrafficLight::getNextSwitch(id);
 
-            // 获取当前相位状态[2](@ref)
+            // 获取当前相位状态
             state.currentPhaseState = libsumo::TrafficLight::getRedYellowGreenState(id);
 
-            // 获取当前程序ID[2](@ref)
+            // 获取当前程序ID
             state.programID = libsumo::TrafficLight::getProgram(id);
 
             // 计算已运行时间（需要记录上次更新时间）
@@ -744,7 +712,7 @@ class TrafficLight : public Actor
         return nullptr;
     }
 
-    // 设置交通灯相位[2](@ref)
+    // 设置交通灯相位
     void setPhase(int phaseIndex)
     {
         try {
@@ -755,7 +723,7 @@ class TrafficLight : public Actor
             std::cerr << "Error setting traffic light phase: " << e.what() << std::endl;
         }
     }
-    // 设置相位持续时间[2](@ref)
+    // 设置相位持续时间
     void setPhaseDuration(double duration)
     {
         try {
@@ -766,7 +734,7 @@ class TrafficLight : public Actor
         }
     }
 
-    // 设置程序逻辑[2](@ref)
+    // 设置程序逻辑
     void setProgram(const std::string& programID)
     {
         try {
@@ -827,7 +795,7 @@ class TrafficVehicle : public Actor
         //     return tmp.Normalized();
         // }
         return dir.Normalized();
-        // return Vector3{0, 0, 0};
+        
     }
     // 计算两点间距离
     static double calculateDistance(const Vector3& a, const Vector3& b)
@@ -855,20 +823,6 @@ typedef struct _ThreadParams
     void* redisConnector;
 } ThreadParams;
 
-// typedef struct RedisConfig
-// {
-//     std::string host;
-//     int port;
-//     std::string password;
-//     int db;
-//     size_t pool_size;
-//     int timeout;
-//     int sleep_time_tf;
-//     int sleep_time_hm;
-//     std::string type;
-//     int reTryCount;
-//     map<string, string> cfgmap;
-// } RedisConfig;
 enum class RedisType { HIREDIS, REDIS_PLUS_PLUS };
 enum class ConnectionTypes { UNKNOWN, STANDALONE, CLUSTER };
 
@@ -927,7 +881,7 @@ struct RoadCoord
             std::size_t h5 = std::hash<int>{}(rc.laneIndex);
             std::size_t h6 = std::hash<double>{}(rc.lanePos);
 
-            // 更好的哈希组合方式（避免冲突）
+            // 哈希（避免冲突）
             std::size_t seed = h1;
             seed ^= h2 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             seed ^= h3 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -1024,7 +978,7 @@ static std::tuple<float, Vector3, double> minDistance_PointToLane(Vector3& point
     double projectionLength = SP.Dot(SE) / SE.Dot(SE);
 
     double t = max(0.0, min(1.0, projectionLength));
-    // cout<<"t:"<<t<<endl;
+    
     // 投影点
     Vector3 projection = vStart + SE * t;
     // 点到投影点的距离
@@ -1038,6 +992,7 @@ static RoadCoord convertToRoad(const Vector3& targetPosition)
     try {
         libsumo::TraCIRoadPosition TCI_RoadPosition =
             libsumo::Simulation::convertRoad(targetPosition.x, targetPosition.y);
+            
         string edgeID = TCI_RoadPosition.edgeID;
         float pos = TCI_RoadPosition.pos;
         int laneIndex = TCI_RoadPosition.laneIndex;
@@ -1074,9 +1029,5 @@ static std::pair<string, double> calLanePos(const string& routeID, Vector3& targ
             min_projection = projection;
         }
     }
-    // printf("Traget(%lf,%lf,%lf)\n",target.x,target.y,target.z);
-    // printf("Projection(%lf,%lf,%lf)\n",min_projection.x,min_projection.y,min_projection.z);
-    // printf("Distance=%lf , lanePosition=%lf\n",(Vector3::Distance(target,min_projection)),lanePosition);
-    // printf("lane: %s \n",&minLaneID);
     return pair<string, double>(minLaneID, lanePosition);
 }

@@ -1,0 +1,13 @@
+<configuration>
+    <input>
+       <net-file value="XODR_1010.net.xml"/>
+       <route-files value="XODR_1010.rou.xml"/>
+       <additional-files value="XODR_1010.vtype.xml"/>
+    </input>
+    <lanechange.duration value="3.0" />
+	<lanechange.overtake-right value="true" />
+	<collision.action value="none" />
+    
+	<max-depart-delay value="2" />
+    <gui-settings-file value="XODR_1010.settings.xml"/>
+</configuration>

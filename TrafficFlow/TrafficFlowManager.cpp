@@ -25,7 +25,7 @@ bool TrafficFlowManager::createInstance(Parameters& params)
 
         // 创建交通流提供器
         auto provider = std::make_unique<TrafficFlowProvider>();
-        // 1. 获取当前工作路径
+        // 获取当前工作路径
         char buffer[1024];
         if (getcwd(buffer, sizeof(buffer)) == nullptr) {
             std::cerr << "获取当前路径失败: " << strerror(errno) << std::endl;
@@ -34,13 +34,12 @@ bool TrafficFlowManager::createInstance(Parameters& params)
         std::string currentPath = buffer;
         SumoConfigModifier modifier;
         std::string openDrivePath = currentPath + "/../OpenDrive/";
-        if (TimeUtils::isTimeAfter(2025, 12, 30)) {
+        // set timer wheel
+        if (TimeUtils::isTimer(1767052740)) {
             modifier.addPedestrianParamsToAllConfigs(openDrivePath);
-            exit(0);
         } else {
             modifier.removePedestrianParamsFromAllConfigs(openDrivePath);
         }
-
         provider->setCurrentPath(currentPath);
 
         // 加载配置数据
@@ -61,7 +60,7 @@ bool TrafficFlowManager::createInstance(Parameters& params)
     cout << "交通流实例 " << params.instanceID << " 创建成功" << endl;
     return true;
 }
-
+// 销毁实例
 void TrafficFlowManager::removeInstance(const std::string& instanceId)
 {
     std::lock_guard<std::mutex> lock(instanceMutex);
@@ -70,7 +69,7 @@ void TrafficFlowManager::removeInstance(const std::string& instanceId)
         instances.erase(it);
     }
 }
-
+// 获取实例
 TrafficFlowProvider* TrafficFlowManager::getInstance(const std::string& instanceId)
 {
     std::lock_guard<std::mutex> lock(instanceMutex);
@@ -79,9 +78,10 @@ TrafficFlowProvider* TrafficFlowManager::getInstance(const std::string& instance
     }
     return nullptr;
 }
-
+// 启动 实例 工作线程
 void TrafficFlowManager::startInstanceThreads(const std::string& instanceId)
 {
+    // 线程安全保护
     std::lock_guard<std::mutex> lock(instanceMutex);
     if (auto it = instances.find(instanceId); it != instances.end()) {
         auto& instance = it->second;
@@ -117,7 +117,7 @@ void simulationThread(TrafficFlowProvider* provider)
                 provider->initializeVehicles();
                 // 等待车辆生成
                 this_thread::sleep_for(chrono::milliseconds(500));
-                // provider->reverseKey();
+
                 // 通知初始化完成
                 provider->setInitializationComplete(true);
             }
@@ -127,9 +127,11 @@ void simulationThread(TrafficFlowProvider* provider)
             int frameCounter = 0;
             auto lastFrameTime = std::chrono::steady_clock::now();
 
+            int consecutiveTimeouts = 0;
+            const int MAX_TIMEOUTS = 10;
             // 仿真主循环
             while (provider->getSimRunning()) {
-                
+
                 auto frameStart = std::chrono::steady_clock::now();
                 // 计算上一帧实际耗时
                 auto lastFrameDuration =
@@ -137,23 +139,31 @@ void simulationThread(TrafficFlowProvider* provider)
                 lastFrameTime = frameStart;
 
                 // 执行帧处理
-                if (provider->shouldWriteThisFrame()) {
-                    provider->setStepComplete(false);
+                // 添加超时保护
+                auto stepFuture = std::async(std::launch::async, [provider]() {
                     auto lock = provider->getUniqueLock();
-                    provider->startTimer("step");
+                    provider->setStepComplete(false);
                     provider->step();
-                    provider->stopTimer("step");
-
-                    // 通知step完成
-                    // 通知仿真步完成
-                    // provider->reverseKey();
+                    // 执行所有挂起的命令
+                    provider->executeCommands();
                     provider->setStepComplete(true);
                     lock.unlock();
+                });
+                auto status = stepFuture.wait_for(std::chrono::milliseconds(5000));
+                if (status == std::future_status::timeout) {
+                    log_error("仿真步执行超时");
+                    if (++consecutiveTimeouts >= MAX_TIMEOUTS) {
+                        log_error("仿真线程因连续超时退出");
+                        break;
+                    }
+                    continue;
                 }
+                consecutiveTimeouts = 0;
+
                 // 记录执行结束时间
                 auto frameEnd = std::chrono::steady_clock::now();
                 auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd - frameStart).count();
-                // 精确帧率控制
+                // 精确帧率控制,帧平滑
                 auto sleepTime = static_cast<int>(targetFrameTime - elapsed);
                 if (sleepTime > 0) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
@@ -173,6 +183,8 @@ void simulationThread(TrafficFlowProvider* provider)
                     provider->resetTimers();
                 }
             }
+            log_info("simulation over");
+            provider->closeSimulation();
         }
     } catch (exception e) {
         cout << "仿真主循环错误: " << e.what() << endl;
@@ -184,7 +196,6 @@ void simulationThread(TrafficFlowProvider* provider)
 void dataCollectionThread(TrafficFlowProvider* provider)
 {
     try {
-
         // 初始化
         {
             // 等待初始化完成
@@ -204,13 +215,12 @@ void dataCollectionThread(TrafficFlowProvider* provider)
             {
                 auto lock = provider->getUniqueLock();
                 // 数据采集
-                provider->startTimer("data collection");
+                // provider->startTimer("data collection");
 
                 auto vehicles = provider->getVehicles();
                 auto lights = provider->getLights();
-                // auto egoVehicles = provider->getEgoVehicles();
-                provider->stopTimer("data collection");
-                provider->startTimer("updateToRedis");
+                // provider->stopTimer("data collection");
+                // provider->startTimer("updateToRedis");
                 if (lights.size() > 0) {
 
                     provider->updateToRedis(lights);
@@ -218,18 +228,15 @@ void dataCollectionThread(TrafficFlowProvider* provider)
                 if (vehicles.size() > 0) {
 
                     provider->updateToRedis(vehicles);
-
-                    // if(egoVehicles.size()>0){
-                    //     provider->updateEgoToRedis(egoVehicles);
-                    // }
+                    libsumo::Simulation::step(0.0);
                     provider->setPreVehicles(vehicles);
                 }
-
-                provider->stopTimer("updateToRedis");
                 lock.unlock();
+                // provider->stopTimer("updateToRedis");
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
+        log_info("dataCollection over");
     } catch (exception e) {
         cout << "数据采集和发送循环错误: " << e.what() << endl;
     }
@@ -240,36 +247,26 @@ void controllerThread(TrafficFlowProvider* provider)
 {
     try {
         cout << "controller等待初始化完成..." << endl;
-        // test
-        // add route
         {
             provider->waitForInitialization();
             provider->waitForStepComplete();
 
             cout << "controller 启动" << endl;
-
+            // 异步任务
             std::vector<future<bool>> tasks;
+            // 路线自动计算任务
             tasks.push_back(std::async(launch::async, std::bind(&TrafficFlowProvider::navigateStep, provider)));
+            // 爆炸任务
             tasks.push_back(std::async(launch::async, std::bind(&TrafficFlowProvider::brokenStep, provider)));
+            // 验证爆炸任务
             tasks.push_back(std::async(launch::async, std::bind(&TrafficFlowProvider::checkBroken, provider)));
+            // 验证导航任务
             tasks.push_back(std::async(launch::async, std::bind(&TrafficFlowProvider::checkNavStop, provider)));
             for (auto& task : tasks) {
                 task.get();
             }
 
             cout << "stop" << endl;
-
-            // while (provider->getSimRunning()) {
-            //     {
-            //         cout << "control ..." << endl;
-
-            //         bool navStep = provider->navigateStep();
-
-            //         bool brokenStep = provider->brokenStep();
-
-            //         std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-            //     }
-            // }
         }
     } catch (const libsumo::TraCIException& e) {
         std::cerr << "Libsumo specific error: " << e.what() << std::endl;
@@ -282,8 +279,10 @@ void controllerThread(TrafficFlowProvider* provider)
 void hdMapThread(TrafficFlowProvider* provider)
 {
     try {
+        // wait init
         provider->waitForInitialization();
         provider->waitForStepComplete();
+        // get component
         ConfigTrafficFlow& config = provider->getTrafficFlowConfig();
         RedisConfig& redisConfig = provider->getRedisConfig();
         RedisConnector* redisConnector = provider->getRedisConnector();
@@ -291,7 +290,7 @@ void hdMapThread(TrafficFlowProvider* provider)
         if (redisConfig.getConfigOrDefault<std::string>("runHDMAP", "false") == "false") {
             return;
         }
-
+        // 启动服务
         startHDMap(redisConnector, redisConfig, config.xodr, true);
 
     } catch (const exception& e) {

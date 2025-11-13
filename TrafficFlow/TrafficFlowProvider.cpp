@@ -61,6 +61,7 @@ bool TrafficFlowProvider::startSimulation()
 {
     bool success = simController_->startSimulation(configTra.options);
     simController_->initializeVehicles(vehicleTypes);
+    // update status
     vehicleManager_->updateSimStatus(simController_->getSimRunning());
     lightManager_->updateSimStatus(simController_->getSimRunning());
     return success;
@@ -88,18 +89,15 @@ void TrafficFlowProvider::step()
 {
     simController_->step();
     // 动态调整车辆数量
-    startTimer("addRandomVeh");
     int currentCount = libsumo::Vehicle::getIDCount();
     if (currentCount < maxVehicles) {
         // 添加车辆
         int toAdd = static_cast<int>(maxVehicles) - currentCount;
-        vehicleManager_->addRandomVehicles(
-            min(toAdd, configTra.sConfig.getConfigOrDefault<int>("addMax", 1))); // 每次最多添加5辆
+        vehicleManager_->addRandomVehicles(min(
+            toAdd, configTra.sConfig.getConfigOrDefault<int>("addMax", 1))); // 每次最多添加n辆,可以在配置文件中进行配置
     }
-
-    stopTimer("addRandomVeh");
 }
-
+// 判断是否能够写入当前帧
 bool TrafficFlowProvider::shouldWriteThisFrame()
 {
     try {
@@ -132,12 +130,11 @@ bool TrafficFlowProvider::checkNavStop()
 {
     constexpr auto CHECK_INTERVAL = std::chrono::milliseconds(10000);
     while (getSimRunning()) {
-        if(!redisConnector_->isConnected()){
+        if (!redisConnector_->isConnected()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10000));
             continue;
         }
         log_info("checkNavStop ...");
-        // cout << "checkNavStop ..." << endl;
 
         std::deque<TrafficVehicle> disappearVehQue = dataCollector_->tryGetDisappearingVehicles();
         while (!disappearVehQue.empty()) {
@@ -148,7 +145,6 @@ bool TrafficFlowProvider::checkNavStop()
                 vehicleManager_->removeEgo(item.actorID);
             } catch (const exception& e) {
                 log_error(string("remove disappearing error: ") + e.what());
-                // cerr << "remove disappearing error: " << e.what() << endl;
             }
         }
 
@@ -162,7 +158,6 @@ bool TrafficFlowProvider::checkNavStop()
                 continue;
             if (std::abs(curLanePosition - lanePosition) <= 3.5) {
                 toRemove.push_back(item);
-                // vehicleManager_->removeEgo(item);
             }
         }
         for (const auto& item : toRemove) {
@@ -195,7 +190,6 @@ bool TrafficFlowProvider::checkNavStop()
             }
         } catch (const exception& e) {
             log_error(e.what());
-            // cerr << e.what() << endl;
         }
 
         std::this_thread::sleep_for(CHECK_INTERVAL);
@@ -213,12 +207,11 @@ bool TrafficFlowProvider::navigateStep()
         }
     }
     while (getSimRunning()) {
-        if(!redisConnector_->isConnected()){
+        if (!redisConnector_->isConnected()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10000));
             continue;
         }
         log_info("navStep ...");
-        // cout << "navStep ..." << endl;
         vector<Route> routeList;
         get_route(routeList);
 
@@ -381,23 +374,39 @@ void TrafficFlowProvider::processVehicleBatch(const vector<string>& vIDs)
 
                 if (distance <= (item.radius + SAFETY_GAP) && vSpeed > 0) {
                     if (distance < item.radius) {
+                        pushCommand([vID]() {
+                            try {
+                                libsumo::Vehicle::remove(vID);
+                            } catch (...) {
+                            }
+                        });
                         log_info(string("紧急 移除：") + vID);
-                        libsumo::Vehicle::remove(vID);
-                        
                         // cout << "紧急 移除：" << vID << endl;
                         break;
-                    }
-                    // else if (distance <= (item.radius + SAFETY_GAP / 2)) {
-                    //     if((vehilceBrakeCount_[vID]++)>5){
-                    //         libsumo::Vehicle::remove(vID);
-                    //     }
-                    //     libsumo::Vehicle::setSpeed(vID, 0.0);
-                    //     libsumo::Vehicle::setAcceleration(vID, 0.0, 3600.0);
+                    } else if (distance <= (item.radius + SAFETY_GAP / 2)) {
+                        if ((vehicleBrakeCount_[vID]++) > 5) {
+                            pushCommand([vID]() {
+                                try {
+                                    libsumo::Vehicle::remove(vID);
+                                } catch (...) {
+                                }
+                            });
+                            vehicleBrakeCount_.erase(vID);
+                        } else {
+                            pushCommand([vID]() {
+                                try {
+                                    libsumo::Vehicle::setSpeed(vID, 0.0);
+                                    libsumo::Vehicle::setAcceleration(vID, 0.0, 3600.0);
+                                } catch (...) {
+                                }
+                            });
+                            log_info(string("紧急 制动：") + vID);
+                        }
 
-                    //     log_info(string("紧急 制动：") + vID);
-                    //     // cout << "紧急 制动：" << vID << endl;
-                    //     break;
-                    // }
+                        // cout << "紧急 制动：" << vID << endl;
+                        break;
+                    }
+                } else {
                 }
             }
         } catch (const exception& e) {
@@ -412,7 +421,7 @@ bool TrafficFlowProvider::checkBroken()
 
     auto lastFullCheck = std::chrono::steady_clock::now();
     while (getSimRunning()) {
-        if(!redisConnector_->isConnected()){
+        if (!redisConnector_->isConnected()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10000));
             continue;
         }
@@ -468,7 +477,7 @@ bool TrafficFlowProvider::brokenStep()
 {
     constexpr auto PROCESS_INTERVAL = std::chrono::milliseconds(10000);
     while (getSimRunning()) {
-        if(!redisConnector_->isConnected()){
+        if (!redisConnector_->isConnected()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10000));
             continue;
         }
@@ -534,25 +543,6 @@ bool TrafficFlowProvider::brokenStep()
             std::unique_lock lock(bombProjectionMutex_);
             bombProjectionList.insert(bombProjectionList.end(), projections.begin(), projections.end());
         }
-        // for_each(execution::par, brokenList.begin(), brokenList.end(), [&](RoadCoord& item) {
-        //     try {
-        //         RoadCoord brokenInfo = convertToRoad(item.position);
-        //         brokenInfo.radius = item.radius;
-        //         laneInRange.push_back(brokenInfo.laneID);
-        //         edgeInRange.push_back(brokenInfo.edgeID);
-        //         projections.push_back(brokenInfo);
-        //         bombProjectionList.push_back(brokenInfo);
-        //         log_info_format("在爆炸位置pos:(%.3f,%.3f,%.3f) 半径:%.1f 范围内找到车道 %s, 投影点位置: %.2f",
-        //                         brokenInfo.position.x, brokenInfo.position.y, brokenInfo.position.z,
-        //                         brokenInfo.radius, brokenInfo.laneID.c_str(), brokenInfo.lanePos);
-        //         // printf("在爆炸位置pos:(%f,%f,%f) 半径:%f 范围内找到车道 %s, 投影点位置: %f\n",
-        //         brokenInfo.position.x,
-        //         //        brokenInfo.position.y, brokenInfo.position.z, brokenInfo.radius, brokenInfo.laneID.c_str(),
-        //         //        brokenInfo.lanePos);
-        //     } catch (const exception& e) {
-        //         cerr << e.what() << endl;
-        //     }
-        // });
 
         if (laneInRange.empty()) {
             log_warning("所有爆炸范围内无车道\n");
@@ -567,7 +557,6 @@ bool TrafficFlowProvider::brokenStep()
                 libsumo::Edge::setEffort(item, highCost);
             } catch (const exception& e) {
                 log_warning("设置边 " + item + string(" 成本时出错 ") + e.what());
-                // cerr << "设置边 " << item << " 成本时出错 " << e.what() << endl;
             }
         }
         libsumo::Simulation::step(0.0);
@@ -586,6 +575,7 @@ bool TrafficFlowProvider::brokenStep()
 // 改进的 setStopForVehicle 函数
 void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& projections)
 {
+    // TODO: 参数配置
     const float STOP_DURATION = 3600;
     const float BASE_SAFETY_GAP = 80.0f;       // 增加基础安全距离
     const double MIN_STOP_DISTANCE = 20.0f;    // 最小停车距离
@@ -612,14 +602,12 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
             double distance = Vector3::Distance(vPos, item.position);
             if (distance <= item.radius) {
                 try {
-                    libsumo::Vehicle::remove(vID);
+                    pushCommand([vID]() { libsumo::Vehicle::remove(vID); });
                     log_info("车辆 " + vID + " 在爆炸范围内, 已移除");
-                    // cout << "车辆 " << vID << " 在爆炸范围内, 已移除" << endl;
                     return;
                 } catch (const exception& e) {
                     log_error("移除车辆 " + vID + string(" 时出错: ") + e.what());
-                    // cerr << "移除车辆 " << vID << " 时出错: " << e.what() << endl;
-                    libsumo::Vehicle::setSpeed(vID, 0);
+                    pushCommand([vID]() { libsumo::Vehicle::setSpeed(vID, 0); });
                     return;
                 }
             }
@@ -635,7 +623,7 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
         }
 
         // C. 为每个爆炸点寻找合适的停车位置
-        vector<tuple<string, double, int>> potentialStops; // 收集所有可能的停车点
+        vector<tuple<string, double, int, double>> potentialStops; // 收集所有可能的停车点
 
         for (RoadCoord& bomb : projections) {
             // 查找爆炸点所在edge在车辆路由中的位置
@@ -646,14 +634,12 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
                     bombRouteIndex = i;
                     log_info_format("veh:%s 将会到达爆炸点:route[%d]=%s  当前route:%s\n", vID.c_str(), i,
                                     route[i].c_str(), route[currentRouteIndex].c_str());
-                    // printf("veh:%s 将会到达爆炸点:route[%d]=%s  当前route:%s\n", vID.c_str(), i, route[i].c_str(),
-                    //        route[currentRouteIndex].c_str());
                     break;
                 }
             }
 
             if (bombRouteIndex == -1) {
-                // cout<<"Faq-7"<<endl;
+                // cout<<"GGB-7"<<endl;
                 continue; // 车辆不会经过这个爆炸点
             }
 
@@ -667,7 +653,6 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
                 // 车辆在爆炸点所在的edge上
                 if (!isAhead(vID, vPos, bomb.position)) {
                     log_info("爆炸点在车辆" + vID + "后方");
-                    // cout << "爆炸点在车辆" << vID << "后方" << endl;
                     return; // 爆炸点在车辆后方
                 }
 
@@ -701,7 +686,7 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
                 // 选择可用的车道索引（尝试所有车道）
                 int maxLaneIndex = libsumo::Edge::getLaneNumber(stopEdge) - 1;
                 for (int laneIdx = 0; laneIdx <= maxLaneIndex; laneIdx++) {
-                    potentialStops.push_back({stopEdge, stopPos, laneIdx});
+                    potentialStops.push_back({stopEdge, stopPos, laneIdx, bomb.radius + safetyGap});
                 }
 
             } else {
@@ -738,13 +723,13 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
                 // 在目标edge上选择所有可用的车道
                 int maxLaneIndex = libsumo::Edge::getLaneNumber(stopEdge) - 1;
                 for (int laneIdx = 0; laneIdx <= maxLaneIndex; laneIdx++) {
-                    potentialStops.push_back({stopEdge, stopPos, laneIdx});
+                    potentialStops.push_back({stopEdge, stopPos, laneIdx, bomb.radius + safetyGap});
                 }
             }
         }
 
         // D. 尝试所有可能的停车点配置
-        for (const auto& [stopEdge, stopPos, stopLaneIndex] : potentialStops) {
+        for (const auto& [stopEdge, stopPos, stopLaneIndex, bombRadius] : potentialStops) {
             // 验证停车点所在的edge是否在车辆路由中
             bool edgeInRoute = false;
             int stopEdgeIndex = -1;
@@ -755,8 +740,6 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
                     stopEdgeIndex = i;
                     log_info_format("veh:%s route[%d]=%s 将经过爆炸点:route[%d]=%s\n", vID.c_str(), currentRouteIndex,
                                     route[currentRouteIndex].c_str(), i, stopEdge.c_str());
-                    // printf("veh:%s route[%d]=%s 将经过爆炸点:route[%d]=%s\n", vID.c_str(), currentRouteIndex,
-                    //        route[currentRouteIndex].c_str(), i, stopEdge.c_str());
                     break;
                 }
             }
@@ -764,17 +747,18 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
             if (!edgeInRoute) {
                 log_info_format("veh:%s route[%d]=%s 已经过爆炸点:%s\n", vID.c_str(), currentRouteIndex,
                                 route[currentRouteIndex].c_str(), stopEdge.c_str());
-                // printf("veh:%s route[%d]=%s 已经过爆炸点:%s\n", vID.c_str(), currentRouteIndex,
-                //        route[currentRouteIndex].c_str(), stopEdge.c_str());
-                // cout << "车辆已经过爆炸点" << endl;
                 continue;
             }
 
             // 检查停车点是否在车辆前方
             if (stopEdgeIndex == currentRouteIndex && stopPos <= currentPos + 1.0) {
                 log_info("在爆炸点附近，移除车辆");
-                // cout << "在爆炸点附近，移除车辆" << endl;
-                libsumo::Vehicle::remove(vID);
+                pushCommand([vID]() {
+                    try {
+                        libsumo::Vehicle::remove(vID);
+                    } catch (...) {
+                    }
+                });
                 return; // 停车点在车辆当前位置或后方
             }
 
@@ -782,7 +766,7 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
             bool stopExists = false;
             auto existingStops = libsumo::Vehicle::getNextStops(vID);
             for (const auto& stop : existingStops) {
-                if (stop.lane == stopEdge && abs(stop.endPos - stopPos) < 10.0) {
+                if (stop.lane == stopEdge && abs(stop.endPos - stopPos) < bombRadius) {
                     stopExists = true;
                     break;
                 }
@@ -793,8 +777,6 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
                 try {
                     log_info_format("currentEdge: %s ,currentEdge[%d] : %s \n", currentEdge.c_str(), currentRouteIndex,
                                     route[currentRouteIndex].c_str());
-                    // cout << "currentEdge:" << currentEdge << ",currentEdge[" << currentRouteIndex
-                    //      << "] : " << route[currentRouteIndex] << endl;
                     log_info_format("\n为车辆 %s 设置停车点: 边=%s 边长=%.2f, 位置=%.2f, 车道索引=%d, 安全距离=%.2f, "
                                     "\n当前速度=%.2fm/s, 当前边=%s 边长=%.2f, 当前车道索引=%d, 当前车道位置=%.2f",
                                     vID.c_str(), stopEdge.c_str(),
@@ -802,16 +784,16 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
                                     stopLaneIndex, safetyGap, currentSpeed, currentEdge.c_str(),
                                     libsumo::Lane::getLength(currentEdge + "_" + to_string(currentLaneIndex)),
                                     currentLaneIndex, currentPos);
-                    // cout << "为车辆 " << vID << " 设置停车点: 边=" << stopEdge
-                    //      << " 边长=" << libsumo::Lane::getLength(stopEdge + "_" + to_string(stopLaneIndex))
-                    //      << ", 位置=" << stopPos << ", 车道索引=" << stopLaneIndex << ", 安全距离=" << safetyGap
-                    //      << ", \n当前速度=" << currentSpeed << "m/s"
-                    //      << ", 当前边=" << currentEdge
-                    //      << " 边长=" << libsumo::Lane::getLength(currentEdge + "_" + to_string(currentLaneIndex))
-                    //      << ", 当前车道索引=" << currentLaneIndex << ", 当前车道位置=" << currentPos << endl;
+
                     // 清除现有停车点
                     if (!existingStops.empty()) {
-                        libsumo::Vehicle::resume(vID);
+                        // 检查车辆是否真的处于停止状态
+                        int stopState = libsumo::Vehicle::getStopState(vID);
+                        // 如果车辆确实在停车状态（对应停止标志位被设置），才执行resume
+                        if ((stopState & 0x1) != 0) {
+                            libsumo::Vehicle::resume(vID);
+                            libsumo::Simulation::step(0.0);
+                        }
                     }
                     currentSpeed *= 0.5;
                     // 先让车辆减速
@@ -821,22 +803,22 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
                     libsumo::Vehicle::insertStop(vID, 0, stopEdge, stopPos, stopLaneIndex, STOP_DURATION,
                                                  libsumo::STOP_DEFAULT);
                     log_info("设置停车点成功\n");
-                    // cout << "设置停车点成功\n" << endl;
+
                     return; // 成功设置一个停车点
 
                 } catch (const exception& e) {
                     // 继续尝试下一个配置
                     log_warning(e.what() + string("\ntry setStop"));
-                    // cout << e.what() << "\ntry setStop" << endl;
+
                     try {
                         libsumo::Vehicle::setStop(vID, stopEdge, stopPos, stopLaneIndex, STOP_DURATION,
                                                   libsumo::STOP_DEFAULT);
                         log_info("设置停车点成功\n");
-                        // cout << "设置停车点成功\n" << endl;
+
                         return;
                     } catch (const exception& e1) {
                         log_warning(string("set 失败，尝试下一车道\n") + e1.what());
-                        // cout << "set 失败，尝试下一车道\n" << e1.what() << endl;
+
                         continue;
                     }
 
@@ -852,15 +834,13 @@ void TrafficFlowProvider::setStopForVehicle(string& vID, vector<RoadCoord>& proj
         if (!potentialStops.empty()) {
             libsumo::Vehicle::setSpeed(vID, 0);
             log_warning("车辆 " + vID + " 设置停车点失败，已减速\n");
-            // cout << "车辆 " << vID << " 设置停车点失败，已减速\n" << endl;
         }
 
     } catch (const exception& e) {
         log_error("处理车辆 " + vID + string(" 时出错: ") + e.what());
-        // cerr << "处理车辆 " << vID << " 时出错: " << e.what() << endl;
     }
 }
-// 改进的 isAhead 函数
+// 是否面向
 bool TrafficFlowProvider::isAhead(string& vID, Vector3& vPos, Vector3& target)
 {
     try {
@@ -889,7 +869,6 @@ bool TrafficFlowProvider::isAhead(string& vID, Vector3& vPos, Vector3& target)
 
     } catch (const exception& e) {
         log_warning(string("判断车辆位置出错：") + e.what());
-        // cerr << "判断车辆位置出错：" << e.what() << endl;
         return false;
     }
 }
@@ -898,10 +877,7 @@ std::vector<TrafficVehicle> TrafficFlowProvider::getVehicles()
 {
     return vehicleManager_->getVehicles();
 }
-std::vector<TrafficVehicle> TrafficFlowProvider::getEgoVehicles()
-{
-    return vehicleManager_->getEgoVehicles();
-}
+// 获取信号灯
 std::vector<TrafficLight> TrafficFlowProvider::getLights()
 {
     return lightManager_->getLights();
@@ -911,7 +887,7 @@ bool TrafficFlowProvider::addEgoVehicle(const string& actorID, const string& rou
 {
     return vehicleManager_->addEgoVehicle(actorID, routeID, egoID);
 }
-
+// 设置历史帧
 bool TrafficFlowProvider::setPreVehicles(const std::vector<TrafficVehicle>& preVeh)
 {
     return dataCollector_->setPreVehicles(preVeh);
@@ -931,6 +907,7 @@ void TrafficFlowProvider::updateToRedis(vector<TrafficVehicle>& vehicles)
         for (auto& item : vehicles) {
             currentCounts_[item.vehType]++;
         }
+        // log_info("write to redis");
         // 更新累计统计
         updateTypeStatistics(currentCounts_);
 
@@ -945,21 +922,7 @@ void TrafficFlowProvider::updateToRedis(vector<TrafficLight>& lights)
         WriteTrafficDataToRedis("TrafficLight", std::move(trafficLightData));
     }
 }
-void TrafficFlowProvider::updateEgoToRedis(vector<TrafficVehicle> vehicles)
-{
-    // std::lock_guard<std::mutex> lock(connectorMutex_);
-    // connectorMutex_.lock();
-    try {
-        if (redisConnector_) {
-            const string egoData = dataCollector_->collectEgoVehiclesData(vehicles, offset_x, offset_y, configTra);
-            WriteTrafficDataToRedis("EgoVehicle", egoData);
-        }
-    } catch (const exception& e) {
-        cerr << "ego update error" << e.what() << endl;
-    }
 
-    // connectorMutex_.unlock();
-}
 void TrafficFlowProvider::WriteTrafficDataToRedis(const string& key, const string& trafficData)
 {
 

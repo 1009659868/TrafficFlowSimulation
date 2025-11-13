@@ -6,8 +6,6 @@ TrafficSimulationController::~TrafficSimulationController() {}
 void TrafficSimulationController::initialize(SConfig& config)
 {
 
-    // stepLength=config.stepLength;
-    // frameInterval=1000.0/config.frameRate;
     stepLength = config.getConfigOrDefault<float>("stepLength", 0.03);
     frameRate = config.getConfigOrDefault<int>("frameRate", 30);
     frameInterval = 1000.0 / frameRate;
@@ -61,8 +59,12 @@ void TrafficSimulationController::initializeVehicles(VehicleType& vTypes)
         for (auto& type : vTypes.typeList) {
             auto& detailTypeList = vTypes.detailTypeListMap[type];
             for(auto& detailType:detailTypeList){
+                //按类型设置最大速度
                 libsumo::VehicleType::setMaxSpeed(detailType,vTypes.getTypeParamOrDefault<double>(detailType,VehicleType::TypeParam::MAXSPEED,33.3));
-                
+                //设置碰撞箱
+                // libsumo::VehicleType::setHeight();
+                // libsumo::VehicleType::setWidth();
+                // libsumo::VehicleType::setLength();
                 
             }
         }

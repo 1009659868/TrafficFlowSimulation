@@ -41,44 +41,17 @@ vector<TrafficVehicle*> DataCollector::findDisappearedVehicles(vector<TrafficVeh
     transform(execution::par, prevVehicles.begin(), prevVehicles.end(), isDisappeared.begin(),
               [&](auto& vehicle) { return currentIDs.find(vehicle.actorID) == currentIDs.end(); });
 
-    // 收集消失车辆
-    // for (size_t i = 0; i < prevVehicles.size(); ++i) {
-    //     if (isDisappeared[i]) {
-    //         // disappeared.push_back(prevVehicles[i]);
-    //         disappeared.push_back(&(prevVehicles[i]));
-    //     }
-    // }
+    
     for (auto it = prevVehicles.begin(); it != prevVehicles.end(); ++it) {
         if (isDisappeared[it - prevVehicles.begin()]) {
-            // disappeared.push_back(prevVehicles[i]);
-            // TrafficVehicle* ptr = &(*it);
+            
             disappeared.push_back(&(*it));
         }
-        // std::cout << *it << " ";
     }
 
     return disappeared;
 }
-const string DataCollector::collectEgoVehiclesData(const std::vector<TrafficVehicle>& vehicles, double offset_x,
-                                                   double offset_y, const ConfigTrafficFlow& configTra)
-{
-    nlohmann::json TrafficdData;
-    int vehicleCount = vehicles.size();
-    auto& actors = TrafficdData["Actors"] = nlohmann::json::array();
-    for (const auto& item : vehicles) {
-        nlohmann::json actorData = {
-            {"actorID", item.actorID},
-            {"assetName", item.vehType},
-            {"position", {{"x", item.pos.x + offset_x}, {"y", item.pos.y + offset_y}, {"z", item.pos.z}}},
-            {"rotation", {{"pitch", item.rot[0]}, {"roll", item.rot[1]}, {"yaw", (item.rot[2])}}},
-        };
-        actors.push_back(std::move(actorData));
-    }
-    TrafficdData["vehicle_count"] = vehicleCount;
-    TrafficdData["frameID"] = collectCount++;
-    const string vehicleData = TrafficdData.dump();
-    return std::move(vehicleData);
-}
+
 
 const string DataCollector::collectTrafficLightData(std::vector<TrafficLight>& lights, double offset_x, double offset_y,
                                                     const ConfigTrafficFlow& configTra)
@@ -164,7 +137,6 @@ const string DataCollector::collectTrafficVehicleData(std::vector<TrafficVehicle
 
     // 计算当前帧的三种变化类型
     vector<TrafficVehicle*> currentDisappeared = findDisappearedVehicles(preVehicles, vehicles);
-
     vector<TrafficVehicle*> newAppearing;
     vector<TrafficVehicle*> updatedVehicles;
 
@@ -176,6 +148,7 @@ const string DataCollector::collectTrafficVehicleData(std::vector<TrafficVehicle
         }
         popAddedVehQue = false;
     }
+    // 数据分类
     for_each(execution::par, vehicles.begin(), vehicles.end(), [&](auto& vehicle) {
         if (prevIDs.find(vehicle.actorID) == prevIDs.end()) {
             lock_guard<mutex> lock(mtx);
@@ -198,6 +171,7 @@ const string DataCollector::collectTrafficVehicleData(std::vector<TrafficVehicle
         // in update
         auto& id = item->actorID;
         if (preVehiclesMap.find(id) != preVehiclesMap.end()) {
+            //计算俯仰角
             auto& preVeh = preVehiclesMap[id];
             auto &preX = preVeh.pos.x, preY = preVeh.pos.y, preZ = preVeh.pos.z;
             auto& rotPitch = preVeh.rot[0];
@@ -208,7 +182,6 @@ const string DataCollector::collectTrafficVehicleData(std::vector<TrafficVehicle
 
             if (curZ == 0) {
                 item->pos.z = preZ;
-                // item->rot[0] = rotPitch;
             }
             double pitch = std::atan2(gapZ, l) * M_PI / 180.0;
             item->rot[0] = pitch;
@@ -261,7 +234,6 @@ const string DataCollector::collectTrafficVehicleData(std::vector<TrafficVehicle
     TrafficdData["vehicle_count"] = vehicleCount;
 
     const string vehicleData = TrafficdData.dump();
-    // cout<<"vehicleCount:"<<vehicleCount<<endl;
 
     return vehicleData;
 }
@@ -274,9 +246,6 @@ void DataCollector::updateSlidingWindows(std::vector<TrafficVehicle*>& newDisapp
     disappearingVehWindow.push_back(vector<TrafficVehicle>());
     disappearingVehWindow.back().reserve(newDisappearing.size());
     for (auto&& vehicle : newDisappearing) {
-        // if (vehicle->vehCategory == "EGO") {
-        //     cout << "DISAPPEARING EGO: " << vehicle->actorID << endl;
-        // }
         disappearingVehWindow.back().push_back(move(*vehicle));
     }
 

@@ -1,0 +1,129 @@
+<additional>
+	<vType id="Player" color="red" length="4.2"  width="1.8"  maxSpeed="13" accel="3.5" decel="2.2" minGap="2.6" minGapLat="0.8" />
+	<vTypeDistribution id="typedist1">
+		<vType id="001-AcuraRL" length="4.80796478" width="2.23913635" height="1.48014465" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="002-AlfaRomeo" length="4.36500183" width="2.12360168" height="1.65920837" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="003-Ampera" length="4.34148926" width="2.13800232" height="1.39305237" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="004-AudiA2" length="3.72658417" width="1.93778259" height="1.53719208" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="005-AudiA8" length="4.94066742" width="2.13354706" height="1.4195668" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="006-AudiQ7" length="4.12011658" width="1.85254562" height="1.42681992" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="007-AudiR8" length="4.40099915" width="2.07858337" height="1.25123795" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="008-AudiS5" length="4.29524658" width="2.00124435" height="1.34716629" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="009-AudiTT" length="4.20256012" width="2.00218201" height="1.37053528" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="010-BentleyContinentalGT" length="4.57255371" width="2.22968079" height="1.41419342" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="011-BenzML500" length="4.75896423" width="2.22421204" height="1.89511749" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="012-BenzSLS" length="4.49287415" width="2.08324356" height="1.2231752" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="013-BMW330" length="4.31413727" width="2.03784058" height="1.39546646" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="014-BMW650" length="4.78191315" width="2.08347794" height="1.36230453" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="015-BMWX6" length="4.83559265" width="2.2423291" height="1.68053253" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="017-ChargerGT" length="5.00379883" width="2.08774887" height="1.42394089" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="018-ChevroletAvalanche" length="5.57547974" width="2.38546783" height="1.88030075" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="019-ChevroletCamaro" length="4.6964679" width="2.12537292" height="1.33551071" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="020-CitroenC2" length="3.45765106" width="1.92395752" height="1.80681107" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="021-CitroenC4" length="4.12120667" width="2.00932022" height="1.76276001" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="022-Express01" length="5.59753174" width="2.27472168" height="2.29204651" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="023-Ferrari458" length="4.43501099" width="2.22910278" height="1.16574692" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="024-Flat500" length="3.47986145" width="1.97419647" height="1.67731628" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="025-HondaCRV" length="4.52203125" width="2.15184891" height="1.86761002" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="026-Ibiza01" length="3.96178345" width="1.9350975" height="1.67727982" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="027-Insignia01" length="4.75791229" width="2.13355072" height="1.47612762" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="028-Lamborghini01" length="4.26357422" width="2.2665097" height="1.13245468" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="029-LanciaDelta" length="3.8894986" width="1.98484711" height="1.31895889" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="030-Leon01" length="4.2384726" width="2.03294052" height="1.83936218" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="032-BenzSL500" length="4.47962372" width="2.05143326" height="1.3170047" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="033-LexusIS" length="4.59083862" width="2.07635361" height="1.46434494" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="034-MaseratiGt" length="4.78173065" width="2.27520737" height="1.33290527" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="035-Mazda6" length="4.56181213" width="2.00890717" height="1.81755341" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="036-Mazda6Evolution" length="4.6675531" width="2.03431168" height="1.42395798" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="037-MazdaCX7" length="4.54709045" width="2.08525848" height="1.75891479" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="038-MitsubishiLancerEX" length="4.44713928" width="2.08214279" height="1.60971954" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="039-MixerTruck01" length="9.42519165" width="3.33511261" height="4.07872894" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="040-NissanGTR" length="4.58946655" width="2.04757584" height="1.34173691" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="041-OpelASTRA" length="4.49139954" width="2.20350876" height="1.78889801" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="042-PorschePanamera" length="4.90615234" width="2.19942871" height="1.39256683" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="043-RangerRover" length="4.75487457" width="2.17253235" height="1.80504013" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="044-RenaultMegane" length="4.22817139" width="2.06724075" height="1.65526825" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="045-SuzukiAlto" length="3.62884338" width="1.99830414" height="1.74618073" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="046-VWPassat" length="4.76834259" width="2.06104507" height="1.8922406" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="047-VWScirocco" length="4.15438873" width="2.16846878" height="1.73604538" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="048-MotorCoach01" length="9.99434937" width="2.57687683" height="3.06661926" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="049-MotorCoach02" length="10.96481201" width="2.65314758" height="3.23784271" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="050-MPV01" length="6.59450562" width="2.41229736" height="2.54009079" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="051-MPV02" length="4.64822815" width="2.13468353" height="1.93784073" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="052-Truck03" length="13.46533325" width="3.06898682" height="4.17789368" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="053-Truck04" length="16.37279541" width="3.0105127" height="4.11706543" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="054-Van01" length="4.22291687" width="2.07663055" height="1.84405945" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="055-Van02" length="4.24073761" width="2.07546066" height="1.8631134" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="056-VanTruck01" length="7.18362061" width="2.46516632" height="2.96126984" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="057-VanTruck02" length="4.29747559" width="2.36185593" height="2.6729071" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="058-Tricycle01" length="3.43876892" width="1.52222107" height="2.13724609" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="Motorcycle01" length="2.20" width="0.70" height="1.70" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="Motorcycle02" length="2.20" width="0.80" height="1.70" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="Motorcycle03" length="2.20" width="0.90" height="1.70" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="Ambulance01"  length="5"    width="2"    height="1.70" maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="Police01"     length="5"    width="2"    height="1.7"  maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="FireEngine01" length="8"    width="2.7"  height="3.5"  maxSpeed="15" accel="3" decel="4.5" minGap="2" minGapLat="0.7" />
+		<vType id="DF26_VEC" color="red" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	
+	<vType id="DF17_VEC" color="red" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="LongVehicle" color="red" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+
+	<vType id="HMSZHC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="HMSFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+
+	<vType id="HMSBJC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="HMSGZC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+
+	<vType id="CoachBus" color="White" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="SedanCar" color="White" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+
+	<vType id="HM" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="XFZHC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+
+	<vType id="XFFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="XFBJC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+
+	<vType id="LT2000" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="TG3" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+
+	<vType id="TJ2" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="TWS" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+
+	<vType id="HQ9B_Vec" color="red" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+
+	<vType id="WZHMS" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="WZXFFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="WZXFZHC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="WZZHC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="WZJC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="WZAGZ" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="CQFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="LDV" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="LTZHC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="LTBJC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="WZKC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="DCFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="CM32" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="TBFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="TBLDC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="TBZHC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="TJ2LDC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="TJ2ZHC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="LVZHC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="TJ2BJC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="AGZFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="QGFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="YXDDFCS" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="JLFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="HMYDC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="TGFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="TJFSC" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="MYCAR" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="S300" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="KJS1" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="DF15B" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="DF16" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	<vType id="DF11A" color="Blue" length="13.46533325" width="3.06898682" maxSpeed="55.5" accel="10" decel="4.5" minGap="5" minGapLat="0.7"/>
+	
+	</vTypeDistribution>
+</additional>

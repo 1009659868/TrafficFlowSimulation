@@ -37,12 +37,18 @@ std::string get_time();
 
 class RedisConnector
 {
-    public:
+private:
+    atomic<bool> heartbeatRunning_{false};
+    thread heartbeatThread_;
+    chrono::seconds heartbeatInterval_{30};//30s
+    void startHeartbeat();
+    void stopHeartbeat();
+public:
     // 使用配置文件构造
     RedisConnector(RedisConfig cfg);
     RedisConnector();
     ~RedisConnector();
-    void disconnect();
+    
     // 连接判断
     bool isConnected() const;
     // 写入
@@ -51,16 +57,12 @@ class RedisConnector
     std::string get(const std::string& key);
     std::string trim(const std::string& s);
 
-    // 订阅
-
     // 推送
     void publish(const std::string& channel, const std::string& message);
     // 重新连接
     bool reconnect();
     // 关闭连接
-
-    // listen reRouteCommend
-    
+    void disconnect();
 
     RedisConfig config_;
 
@@ -74,20 +76,19 @@ class RedisConnector
     private:
     std::chrono::steady_clock::time_point lastUsed_;
     bool connect();
-
+    void tryRedirect();
     std::atomic<bool> running_{false};
 
     redisContext* context_;
     // 使用智能指针管理 hiredis 连接
     std::shared_ptr<redisContext> hiredisContext_;
-    // redis++ 连接
+    // redis++ 连接 
     std::shared_ptr<sw::redis::Redis> redisPlusPlusStandalone_; // 单机连接对象
     std::shared_ptr<sw::redis::RedisCluster> redisPlusPlusCluster_;
 
     RedisType redisType_;
     ConnectionTypes connectionType_ = ConnectionTypes::UNKNOWN;
     // 连接配置
-    
     std::string host_;
     int port_;
     std::string password_;
@@ -104,25 +105,7 @@ class RedisConnector
     mutable std::recursive_mutex mutex_;   // 递归锁允许同一线程重入
     std::atomic_bool reconnecting_{false}; // 重连状态标志
     std::atomic<bool> connected_{false};
-    private:
-    // // 处理重定向
-    // bool handleRedirect(const std::string& errorMsg);
-    // // 使用重定向地址尝试连接
-    // bool tryConnectWithRedirect(const std::string& host, int port);
-
-    // bool tryHiredisStandalone();
-    // bool tryHiredisCluster();
-    // bool tryHiredisRedirect();
-
-    // bool tryRedisPlusPlusStandalone();
-    // bool tryRedisPlusPlusCluster();
-    // bool tryRedisPlusPlusRedirect();
-
-    //  // 添加命令执行方法
-    // redisReply* executeCommand(const char* format, ...);
-
-
 
     private:
-    void tryRedirect();
+   
 };

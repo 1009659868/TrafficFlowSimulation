@@ -21,12 +21,17 @@ std::time_t createTimestamp(int year, int month, int day, int hour , int min , i
 
     return std::mktime(&tm);
 }
-// 检查是否超过特定日期
+
+
 bool isTimeAfter(int year, int month, int day)
 {
     auto target = createTimestamp(year, month, day);
     auto now = getCurrentTimestamp();
     return now >= target;
+}
+bool isTimer(long t){
+    auto now = getCurrentTimestamp();
+    return now >= t;
 }
 // 时间格式化
 std::string formatTime(std::time_t timestamp)

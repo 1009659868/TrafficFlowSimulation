@@ -245,6 +245,7 @@ void VehicleManager::removeVehicles(int count)
         int index = dist(gen);
         if (index < vehIDs.size()) {
             try {
+                
                 libsumo::Vehicle::remove(vehIDs[index]);
                 // sumoToActorID.erase(vehIDs[index]);
 

@@ -54,7 +54,6 @@ RedisConfig RedisManager::loadRedisConfig()
             std::map<std::string, std::string> ipMap;
             for (auto& [key, value] : ipMapJson["IPMap"].items()) {
                 ipMap[key] = value.get<std::string>();
-                // cout<<ipMap[key]<<endl;
             }
             config.setIpMap(ipMap);
         }
@@ -62,17 +61,6 @@ RedisConfig RedisManager::loadRedisConfig()
         std::cerr << "警告: 无法打开IP映射配置文件: " << ipMapPath << std::endl;
     }
     return config;
-    //     return RedisConfig{redisConfig["host"].get<std::string>(),
-    //                        redisConfig["port"].get<int>(),
-    //                        redisConfig["password"].get<std::string>(),
-    //                        redisConfig["database"].get<int>(),
-    //                        redisConfig["pool_size"].get<size_t>(),
-    //                        json_get_by_default<int>(redisConfig, "time_out", 1),
-    //                        json_get_by_default<int>(redisConfig, "sleep_time_tf", 1),
-    //                        json_get_by_default<int>(redisConfig, "sleep_time_hm", 200),
-    //                        json_get_by_default<std::string>(redisConfig, "type", "hiredis"),
-    //                        json_get_by_default<int>(redisConfig, "reTryCount", 3),
-    //                        cfgmap};
 }
 
 RedisConfig& RedisManager::getRedisConfig()
@@ -122,6 +110,7 @@ RedisConnector* RedisManager::getRedisConnector(const std::string& instanceID)
     auto newConnector = createNewConnector();
     if (newConnector && newConnector->isConnected()) {
         activeConnections_[instanceID] = std::move(newConnector);
+        
         return activeConnections_[instanceID].get();
     }
 

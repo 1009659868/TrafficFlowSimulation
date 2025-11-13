@@ -1,0 +1,15 @@
+<configuration>
+    <input>
+       <net-file value="950XODR11-11.net.xml"/>
+       <route-files value="950XODR11-11.rou.xml"/>
+       <additional-files value="950XODR11-11.vtype.xml"/>
+    </input>
+    <lanechange.duration value="3.0" />
+	<lanechange.overtake-right value="true" />
+	<collision.action value="none" />
+	<max-depart-delay value="2" />
+    
+	
+    
+    <gui-settings-file value="950XODR11-11.settings.xml"/>
+</configuration>

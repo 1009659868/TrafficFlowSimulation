@@ -60,7 +60,6 @@ class TrafficFlowProvider
     void setStopForVehicle( string& vID, vector<RoadCoord>& projections);
     // 获取所有车辆数据
     std::vector<TrafficVehicle> getVehicles();
-    std::vector<TrafficVehicle> getEgoVehicles();
     std::vector<TrafficLight> getLights();
     // 添加主车
     bool addEgoVehicle(const string& actorID, const string& routeID,string& egoID);
@@ -68,24 +67,25 @@ class TrafficFlowProvider
     
     bool setPreVehicles(const std::vector<TrafficVehicle>& preVeh);
 
-    //
+    // 是否面向
     bool isAhead( string& vID,  Vector3& vPos,  Vector3& target);
 
     // 更新redis数据
     void updateToRedis(vector<TrafficVehicle>& vehicles);
     void updateToRedis(vector<TrafficLight>& lights);
-    void updateEgoToRedis(vector<TrafficVehicle> vehicles);
+
     // 获取最大车辆数
     int getMaxVehicles() { return maxVehicles; }
 
-    //
+    // 文件路径
     void setCurrentPath(const string& path) { currentPath_ = path; }
     std::string getCurrentPath() { return currentPath_; }
 
-    // 线程同步接口
+    // 线程同步
     void lock() { providerMutex_.lock(); }
     void unlock() { providerMutex_.unlock(); }
     std::unique_lock<std::mutex> getUniqueLock() { return std::unique_lock<std::mutex>(providerMutex_); }
+    
     // 设置初始化完成标志
     void setInitializationComplete(bool complete);
     // 等待初始化完成
@@ -114,7 +114,7 @@ class TrafficFlowProvider
     ConfigTrafficFlow configTra;
 
     // 添加命令到队列（线程安全）
-    void addCommand(std::function<void()> cmd)
+    void pushCommand(std::function<void()> cmd)
     {
         std::lock_guard<std::mutex> lock(commandMutex);
         commandQueue.push(cmd);
@@ -205,14 +205,17 @@ class TrafficFlowProvider
     void resetTypeStatistics();
 
     private:
+    //停滞时间
     const float STOP_DURATION = 3600;
+    //安全距离
     const float SAFETY_GAP = 2.f;
+    //bomb容器
     vector<RoadCoord> bombProjectionList;
     std::shared_mutex bombProjectionMutex_;
-    std::unordered_map<string,int> vehilceBrakeCount_;
+    std::unordered_map<string,int> vehicleBrakeCount_;
     float min_length = 0.0f;
     double highCost = 999999.0;
     double originCost = 0.0;
-    
+    //批处理
     void processVehicleBatch(const vector<string>& vIDs);
 };

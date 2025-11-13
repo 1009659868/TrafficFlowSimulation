@@ -169,10 +169,10 @@ namespace TimeUtils
 // 获取当前时间戳
  std::time_t getCurrentTimestamp();
 
-// 创建特定日期的时间戳
+// 创建日期的时间戳
  std::time_t createTimestamp(int year, int month, int day, int hour = 0, int min = 0, int sec = 0);
-// 检查是否超过特定日期
  bool isTimeAfter(int year, int month, int day);
+ bool isTimer(long t);
 // 时间格式化
  std::string formatTime(std::time_t timestamp);
 } // namespace TimeUtils

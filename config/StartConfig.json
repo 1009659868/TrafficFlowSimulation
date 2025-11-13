@@ -1,6 +1,6 @@
 {
     "instanceID":"19738",
-    "simSpaceID": "XODR_1010",
+    "simSpaceID": "950XODR11-13",
     "startType": "sumo", 
     "version":"1.18.0",
     "stepLength": 0.03,
@@ -8,5 +8,6 @@
     "frameRate": 60,
     "offset_x":-212295.79885,
     "offset_y":-2681305.7766,
-    "addMax":5
+    "addMax":5,
+    "slidingWindowSize":25
 }

@@ -43,8 +43,63 @@ void log_all_redirected_ips()
     }
 }
 
+void RedisConnector::startHeartbeat() {
+    heartbeatRunning_=true;
+    heartbeatThread_=thread([this](){
+        while (heartbeatRunning_)
+        {
+            this_thread::sleep_for(heartbeatInterval_);
+            log_warning("心跳检测...");
+            // 增加更严格的状态检查
+            if(!heartbeatRunning_) break;
+            if(!connected_||reconnecting_) continue;
+            bool need_check = false;
+            {
+                lock_guard<recursive_mutex> lock(mutex_);
+                // 只有在上次使用后经过一定时间才检查
+                auto now = chrono::steady_clock::now();
+                auto elapsed = chrono::duration_cast<chrono::seconds>(now - lastUsed_);
+                if (elapsed < chrono::seconds(10)) { // 10秒内有活动则不检查
+                    continue;
+                }
+                need_check = (context_ != nullptr);
+            }
+            
+            if (need_check && !reconnecting_) {
+                try {
+                    lock_guard<recursive_mutex> lock(mutex_);
+                    if (!context_) continue;
+                    
+                    redisReply* reply = (redisReply*)redisCommand(context_, "PING");
+                    if (!reply || reply->type == REDIS_REPLY_ERROR || 
+                        (reply->type == REDIS_REPLY_STATUS && std::string(reply->str) != "PONG")) {
+                        log_error("心跳检测失败，连接已断开");
+                        connected_ = false;
+                        // 异步重连，不阻塞心跳线程
+                        std::thread([this]() { 
+                            if (!reconnecting_) reconnect(); 
+                        }).detach();
+                    }
+                    if (reply) freeReplyObject(reply);
+                } catch (...) {
+                    log_error("心跳检测异常");
+                }
+            }
+        }
+        
+    });
+}
+void RedisConnector::stopHeartbeat() {
+    heartbeatRunning_ = false;
+    if(heartbeatThread_.joinable()){
+        heartbeatThread_.join();
+    }
+}
+
 RedisConnector::~RedisConnector()
 {
+
+    stopHeartbeat();
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     disconnect();
 }
@@ -108,6 +163,7 @@ RedisConnector::RedisConnector()
     context_ = nullptr;
     log_info("Redis连接器初始化完成 - 类型: " + type + ", 主机: " + host_ + ":" + std::to_string(port_));
     connect();
+    startHeartbeat();
 }
 RedisConnector::RedisConnector(RedisConfig cfg) : config_(cfg)
 {
@@ -127,6 +183,7 @@ RedisConnector::RedisConnector(RedisConfig cfg) : config_(cfg)
 
     context_ = nullptr;
     connect();
+    startHeartbeat();
 }
 
 void RedisConnector::disconnect()
@@ -262,13 +319,26 @@ bool RedisConnector::connect()
 
 bool RedisConnector::reconnect()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    bool expected = false;
+    if(!reconnecting_.compare_exchange_strong(expected,true)){
+        log_warning("重连操作正在进行中，跳过本次重连");
+        return false;
+    }
+    // std::lock_guard<std::recursive_mutex> lock(mutex_);
     // std::lock_guard<std::mutex> lock(connectMutex_);
     // 防止递归重连
-    if (reconnecting_)
-        return false;
-    reconnecting_ = true;
+    // if (reconnecting_)
+    //     return false;
+    // reconnecting_ = true;
 
+    // RAII保护，确保标志位正确重置
+    struct ReconnectGuard {
+        std::atomic<bool>& flag_;
+        ReconnectGuard(std::atomic<bool>& flag) : flag_(flag) {}
+        ~ReconnectGuard() { flag_ = false; }
+    } guard(reconnecting_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    log_warning("开始Redis重连过程...");
     disconnect();
 
     // cout<<host_<<endl;
@@ -277,36 +347,73 @@ bool RedisConnector::reconnect()
     auto mappedHost = config_.getMappedIp(host_);
     if (mappedHost != "") {
         host_ = mappedHost;
+        log_info("重连时应用IP映射: " + originalHost + " -> " + host_);
         // std::cout << "重连时应用IP映射: " << originalHost << " -> " << host_ << std::endl;
     }
 
     // try reconnect
     for (int i = 0; i < retryCount; i++) {
+        int waitSeconds = std::min(1 << i, 10); // 指数退避，最大10秒
+        if (i > 0) {
+            log_info("等待 " + std::to_string(waitSeconds) + " 秒后重试...");
+            std::this_thread::sleep_for(std::chrono::seconds(waitSeconds));
+        }
+        log_info("尝试重新连接Redis (" + std::to_string(i + 1) + "/" + 
+                std::to_string(retryCount) + ") 到 " + host_ + ":" + std::to_string(port_));
         // std::cout << "尝试重新连接Redis (" << (i + 1) << "/" << (retryCount) << ")..." << std::endl;
 
-        context_ = redisConnect(host_.c_str(), port_);
-        if (context_ == nullptr || context_->err) {
-            std::cout << " 连接失败! 主机: " << host_ << ":" << port_ << std::endl;
-            // redisFree(context_);
-            reconnecting_ = false;
-            return false;
-        } else {
+        redisContext* newContext = redisConnect(host_.c_str(), port_);
+
+        if (newContext && !newContext->err) {
+            // 释放旧连接
+            if (context_) {
+                redisFree(context_);
+            }
+            context_ = newContext;
             connected_ = true;
+            
+            // 验证连接有效性
+            redisReply* reply = (redisReply*)redisCommand(context_, "PING");
+            if (reply && reply->type == REDIS_REPLY_STATUS && 
+                std::string(reply->str) == "PONG") {
+                log_info("Redis重连成功并验证通过");
+                freeReplyObject(reply);
+                // 重连成功后重新启动心跳
+                stopHeartbeat();
+                startHeartbeat();
+                return true;
+            }
+            if (reply) freeReplyObject(reply);
         }
-
-        if (connected_) {
-
-            reconnecting_ = false;
-            // cout<<"Redis重连成功"<<endl;
-            return true;
+        if (newContext) {
+            if (newContext->err) {
+                log_error("重连失败: " + std::string(newContext->errstr));
+            }
+            redisFree(newContext);
+        } else {
+            log_error("重连失败: 无法创建Redis连接");
         }
+        // if (context_ == nullptr || context_->err) {
+        //     std::cout << " 连接失败! 主机: " << host_ << ":" << port_ << std::endl;
+        //     // redisFree(context_);
+        //     reconnecting_ = false;
+        //     return false;
+        // } else {
+        //     connected_ = true;
+        // }
 
-        // 等待一段时间再重试
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        // if (connected_) {
+
+        //     reconnecting_ = false;
+        //     // cout<<"Redis重连成功"<<endl;
+        //     return true;
+        // }
+
+        // // 等待一段时间再重试
+        // std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     std::cerr << "Redis重连失败" << std::endl;
     host_ = originalHost;
-    reconnecting_ = false;
     return false;
 }
 
@@ -314,55 +421,86 @@ bool RedisConnector::checkConnection()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (reconnecting_)
-        return false; // 避免在重连时检查
-
-    // if (!connected_ || !context_)
-    if (!connected_) {
-        std::string originalHost = host_;
-        auto mappedHost = config_.getMappedIp(host_);
-        if (mappedHost != "") {
-            host_ = mappedHost;
-            std::cout << "连接检测时应用IP映射: " << originalHost << " -> " << host_ << std::endl;
-        }
-        bool result = reconnect();
-        connected_ = result;
-        // 恢复原始主机地址
-        host_ = originalHost;
-
-        return result;
+    if (reconnecting_) {
+        log_warning("重连进行中，跳过连接检查");
+        return false;
     }
+    // if (!connected_ || !context_) {
+    //     log_warning("连接不可用，尝试重连...");
+    //     return reconnect();
+    // }
 
+    // 使用PING命令验证连接有效性
     try {
-        if (redisType_ == RedisType::HIREDIS) {
-            // 发送PING命令检查连接
-            redisReply* reply = (redisReply*)redisCommand(context_, "GET keys");
-            // redisReply* reply = executeCommand("PING");
-            if (reply == nullptr) {
-                std::cerr << "PING命令失败: 无回复" << std::endl;
-                return reconnect();
-            }
-
-            bool success = false;
-            if (reply->type == REDIS_REPLY_STATUS && std::string(reply->str, reply->len) == "PONG") {
-                success = true;
-            } else if (reply->type == REDIS_REPLY_ERROR) {
-                std::cerr << "PING错误: " << std::string(reply->str) << std::endl;
-            }
-
-            freeReplyObject(reply);
-
-            if (!success) {
-                return reconnect();
-            }
-
-            setLastUsedTime();
-            return true;
+        redisReply* reply = (redisReply*)redisCommand(context_, "PING");
+        if (!reply) {
+            log_error("PING命令无响应，连接可能已断开");
+            return reconnect();
         }
-
-    } catch (...) {
+        
+        bool success = (reply->type == REDIS_REPLY_STATUS && 
+                       std::string(reply->str) == "PONG");
+        freeReplyObject(reply);
+        
+        if (!success) {
+            log_error("PING响应异常，连接可能已断开");
+            return reconnect();
+        }
+        
+        setLastUsedTime();
+        return true;
+        
+    } catch (const std::exception& e) {
+        log_error(std::string("连接检查异常: ") + e.what());
         return reconnect();
     }
+
+    // if (!connected_ || !context_)
+    // if (!connected_) {
+    //     std::string originalHost = host_;
+    //     auto mappedHost = config_.getMappedIp(host_);
+    //     if (mappedHost != "") {
+    //         host_ = mappedHost;
+    //         std::cout << "连接检测时应用IP映射: " << originalHost << " -> " << host_ << std::endl;
+    //     }
+    //     bool result = reconnect();
+    //     connected_ = result;
+    //     // 恢复原始主机地址
+    //     host_ = originalHost;
+
+    //     return result;
+    // }
+
+    // try {
+    //     if (redisType_ == RedisType::HIREDIS) {
+    //         // 发送PING命令检查连接
+    //         redisReply* reply = (redisReply*)redisCommand(context_, "GET keys");
+    //         // redisReply* reply = executeCommand("PING");
+    //         if (reply == nullptr) {
+    //             std::cerr << "PING命令失败: 无回复" << std::endl;
+    //             return reconnect();
+    //         }
+
+    //         bool success = false;
+    //         if (reply->type == REDIS_REPLY_STATUS && std::string(reply->str, reply->len) == "PONG") {
+    //             success = true;
+    //         } else if (reply->type == REDIS_REPLY_ERROR) {
+    //             std::cerr << "PING错误: " << std::string(reply->str) << std::endl;
+    //         }
+
+    //         freeReplyObject(reply);
+
+    //         if (!success) {
+    //             return reconnect();
+    //         }
+
+    //         setLastUsedTime();
+    //         return true;
+    //     }
+
+    // } catch (...) {
+    //     return reconnect();
+    // }
 }
 
 bool RedisConnector::isConnected() const
@@ -378,32 +516,40 @@ bool RedisConnector::set(const std::string& key, const std::string& value)
     //     return false;
     // }
     if (reconnecting_) {
-        std::cerr << "正在重连，跳过SET操作" << std::endl;
+        log_warning("正在重连，跳过SET操作: " + key);
         return "";
     }
-    if (context_ == NULL)
+    // 只在长时间未使用时检查连接
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastUsed_);
+    if (elapsed > std::chrono::seconds(30) && !checkConnection()) {
+        log_error("Redis连接检查失败: " + key);
         return false;
-    static int checkCount=0;
-    if(checkCount>10){
-        checkCount=0;
-        // log_warning("checkConnectioning ...");
-        return !checkConnection();   
     }
-    checkCount++;
-
+    // static int checkCount=0;
+    // if(checkCount>10){
+    //     checkCount=0;
+    //     // log_warning("checkConnectioning ...");
+    //     return !checkConnection();
+    // }
+    // checkCount++;
+    
     bool success = false;
     if (redisType_ == RedisType::HIREDIS) {
 
         redisReply* reply = (redisReply*)redisCommand(context_, "SET %s %s ", key.c_str(), value.c_str());
         if (reply == NULL) {
-            cout << "reply is null :" << context_->errstr << endl;
-            // freeReplyObject(reply);
-            success = connect();
+            // cout << "reply is null :" << context_->errstr << endl;
+            // // freeReplyObject(reply);
+            // success = connect();
+            log_error("SET命令执行失败: " + std::string(context_->errstr));
+            connected_ = false;
+            return false;
         }
 
         if (reply->type == REDIS_REPLY_ERROR) {
             // cout << "reply type is ERROR :" << reply->str << endl;
-
+            log_error("SET命令错误: " + std::string(reply->str));
             char* movedInfo = reply->str;
             int slot, newport;
             char newhost[256];
@@ -462,11 +608,16 @@ std::string RedisConnector::get(const std::string& key)
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     if (reconnecting_) {
-        std::cerr << "正在重连，跳过GET操作" << std::endl;
+        log_warning("正在重连，跳过SET操作: " + key);
         return "";
     }
-    if (context_ == NULL)
+    // 只在长时间未使用时检查连接
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastUsed_);
+    if (elapsed > std::chrono::seconds(30) && !checkConnection()) {
+        log_error("Redis连接检查失败: " + key);
         return "";
+    }
     std::string result = "";
     bool success = false;
 

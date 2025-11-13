@@ -16,7 +16,6 @@ public:
     // 初始化管理器
     void initialize();
     RedisConfig loadRedisConfig();
-
     RedisConfig& getRedisConfig();
 
     void writeToRedis(const std::string& instanceID, const std::string& key, const std::string& data);

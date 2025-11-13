@@ -16,9 +16,7 @@ std::pair<Parameters, bool> parseCommandLine(int nArgc, char* argv[])
 
     // 解析参数 必须要传入实例ID,所以参数从2开始计算
     if (nArgc < 2) {
-         cerr << "Usage: " << argv[0] << " <InstanceID> [--simSpaceID <ID>] " << endl;
-        // cerr << "Usage: " << argv[0] << " <InstanceID> [--simSpaceID <ID>] [--MaxVehicles <value>] "
-        //      << "[--Density <value>] [--StepLength <value>] [--IsTrafficSignal <0|1>]" << endl;
+        cerr << "Usage: " << argv[0] << " <InstanceID> [--simSpaceID <ID>] " << endl;
         return pair<Parameters, bool>(params, true);
     }
     // 第一个参数是实例ID
@@ -30,8 +28,6 @@ std::pair<Parameters, bool> parseCommandLine(int nArgc, char* argv[])
     } else {
         params.instanceID = arg;
     }
-    // params.instanceID+="_TrafficFlow";
-    // std::string configPath = "../config/" + params.instanceID + ".json";
     std::string configPath = "../config/" + params.instanceID + ".json";
     bool loaded = params.loadFromJSON(configPath);
 
@@ -43,9 +39,9 @@ int main(int nArgc, char* argv[])
     try {
         TrafficFlowManager& manager = TrafficFlowManager::getInstance();
 
-        // 参数优先级：命令行 > 配置文件
+        // 参数优先级：命令行 > 配置文件 > 默认参数
         auto [params, loaded] = parseCommandLine(nArgc, argv);
-        
+
         // 创建并启动实例
         if (loaded && manager.createInstance(params)) {
             manager.startInstanceThreads(params.instanceID);
@@ -56,9 +52,10 @@ int main(int nArgc, char* argv[])
 
         // 主线程等待
         while (true) {
-            this_thread::sleep_for(chrono::seconds(1));
+            this_thread::sleep_for(chrono::seconds(10000));
             // 此处添加状态监控逻辑
         }
+        manager.removeInstance(params.instanceID);
     } catch (const exception& e) {
         cerr << "Main error: " << e.what() << endl;
         return 1;
